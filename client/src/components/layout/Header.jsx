@@ -67,6 +67,7 @@ export default function Header({ onMenu }) {
       <form className="global-search" onSubmit={onSearch}>
         <Search size={16} aria-hidden="true" />
         <input aria-label="Search products" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products or SKU" />
+        <kbd className="search-kbd">Ctrl K</kbd>
       </form>
       <div className="topbar-actions">
         <button className="icon-btn" type="button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>

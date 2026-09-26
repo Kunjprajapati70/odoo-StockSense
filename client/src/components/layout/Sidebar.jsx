@@ -1,10 +1,20 @@
-import { NavLink } from 'react-router-dom';
-import { Boxes, PanelLeft } from 'lucide-react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Boxes, LogOut, PanelLeft } from 'lucide-react';
 import { NAV_SECTIONS } from '../../constants/navigation';
+import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../constants/routes';
 
 export default function Sidebar({ open, collapsed, onToggle, onNavigate }) {
-  const main = NAV_SECTIONS.filter((section) => section.label !== 'Account');
-  const account = NAV_SECTIONS.find((section) => section.label === 'Account');
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const main = NAV_SECTIONS.filter((section) => section.label !== 'Profile');
+  const account = NAV_SECTIONS.find((section) => section.label === 'Profile');
+
+  async function onLogout() {
+    await logout();
+    onNavigate?.();
+    navigate(ROUTES.LOGIN);
+  }
 
   function renderItem(item) {
     const Icon = item.icon;
@@ -48,7 +58,16 @@ export default function Sidebar({ open, collapsed, onToggle, onNavigate }) {
         ))}
       </nav>
       <div className="sidebar-foot">
+        <Link className="sidebar-note" to="/alerts" onClick={onNavigate} title="Stock watch">
+          <strong>Stock watch</strong>
+          <span>Low and out-of-stock items that need a reorder.</span>
+        </Link>
+        <p className="nav-label">Profile</p>
         {account?.items.map(renderItem)}
+        <button className="nav-link" type="button" data-label="Log out" title={collapsed ? 'Log out' : undefined} onClick={onLogout}>
+          <LogOut size={18} aria-hidden="true" />
+          <span className="nav-text">Log out</span>
+        </button>
       </div>
     </aside>
   );

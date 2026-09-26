@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Printer } from 'lucide-react';
 import FilterBar from '../../components/common/FilterBar';
 import Modal from '../../components/common/Modal';
 import Pagination from '../../components/common/Pagination';
@@ -98,7 +99,7 @@ export function DocumentList({ title, description, basePath, service, mode, part
       toast.notify(response.message || 'Saved.');
       setOpen(false);
       setForm(initialForm(mode));
-      setParams((current) => new URLSearchParams(current));
+      list.reload();
     } catch (err) {
       setFormError(errorMessage(err));
     } finally {
@@ -230,9 +231,18 @@ export function DocumentDetail({ service, mode, partyKey, partyLabel, listPath }
           <h1>{doc.number}</h1>
           <p>{placeName(doc, mode)}</p>
         </div>
-        <Badge value={doc.status} />
+        <div className="toolbar no-print">
+          {mode === 'receipt' ? <button className="btn" type="button" onClick={() => window.print()}><Printer size={16} /> Print receipt</button> : null}
+          <Badge value={doc.status} />
+        </div>
       </header>
-      <article className="card card-pad">
+      <article className="card card-pad receipt-sheet">
+        {mode === 'receipt' ? (
+          <div className="print-only">
+            <p className="print-brand">StockSense</p>
+            <h2>Goods receipt</h2>
+          </div>
+        ) : null}
         <p><strong>{partyLabel}:</strong> {doc[partyKey] || doc.reason}</p>
         <p className="muted">{formatDate(doc.date)} · Created by {doc.createdBy?.name || '—'}</p>
         {doc.notes ? <p>{doc.notes}</p> : null}
@@ -250,15 +260,18 @@ export function DocumentDetail({ service, mode, partyKey, partyLabel, listPath }
           ))}
         </div>
         {open ? (
-          <div className="toolbar" style={{ marginTop: 16 }}>
-            {mode !== 'adjustment' && doc.status === 'draft' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'waiting' }))}>Mark waiting</button> : null}
-            {mode !== 'adjustment' && doc.status !== 'ready' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'ready' }))}>Mark ready</button> : null}
+          <div className="toolbar no-print" style={{ marginTop: 16 }}>
+            {mode === 'delivery' && doc.status === 'draft' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'waiting' }))}>Pick items</button> : null}
+            {mode === 'delivery' && doc.status === 'waiting' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'ready' }))}>Pack items</button> : null}
+            {mode !== 'delivery' && mode !== 'adjustment' && doc.status === 'draft' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'waiting' }))}>Mark waiting</button> : null}
+            {mode !== 'delivery' && mode !== 'adjustment' && doc.status !== 'ready' ? <button className="btn" type="button" disabled={busy} onClick={() => run(() => service.update(id, { status: 'ready' }))}>Mark ready</button> : null}
             <button className="btn btn-primary" type="button" disabled={busy} onClick={() => run(() => service.validate(id))}>Validate</button>
             <button className="btn btn-danger" type="button" disabled={busy} onClick={() => run(() => service.cancel(id), 'Canceled')}>Cancel</button>
           </div>
         ) : null}
+        {open && mode === 'delivery' ? <p className="muted" style={{ marginTop: 12 }}>Pick the items, pack them, then validate. Validation decreases stock.</p> : null}
         {doc.status === 'done' ? <p className="muted" style={{ marginTop: 12 }}>Completed {formatDate(doc.validatedAt)} by {doc.validatedBy?.name || '—'}. Historical stock records cannot be edited.</p> : null}
-        <button className="btn" type="button" style={{ marginTop: 12 }} onClick={() => navigate(listPath)}>Back to list</button>
+        <button className="btn no-print" type="button" style={{ marginTop: 12 }} onClick={() => navigate(listPath)}>Back to list</button>
       </article>
     </section>
   );

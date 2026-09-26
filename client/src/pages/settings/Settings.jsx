@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Moon, Sun, Warehouse } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
 import authService from '../../services/authService';
 import { errorMessage } from '../../services/api';
+import { ROUTES } from '../../constants/routes';
 
 export default function Settings() {
   const { user, setUser } = useAuth();
@@ -25,7 +27,14 @@ export default function Settings() {
 
   return (
     <section className="page">
-      <header className="page-header"><div><h1>Settings</h1><p>Preferences are stored on your account.</p></div></header>
+      <header className="page-header"><div><h1>Settings</h1><p>Account preferences and warehouse setup.</p></div></header>
+      <section className="card card-pad" style={{ display: 'grid', gap: 12, maxWidth: 520 }}>
+        <h2>Warehouses</h2>
+        <p className="muted">Manage warehouses and the locations used for receipts, deliveries, and transfers.</p>
+        <Link className="btn btn-primary" to={ROUTES.WAREHOUSE} style={{ justifySelf: 'start' }}>
+          <Warehouse size={16} /> Open warehouses
+        </Link>
+      </section>
       <section className="card card-pad" style={{ display: 'grid', gap: 12, maxWidth: 520 }}>
         <h2>Appearance</h2>
         <p className="muted">Choose your preferred workspace visual theme.</p>

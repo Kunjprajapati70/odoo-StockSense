@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 export default function usePagedList(loader, params) {
   const [state, setState] = useState({ loading: true, error: '', rows: [], meta: null });
-  const key = JSON.stringify(params);
+  const [tick, setTick] = useState(0);
+  const key = `${JSON.stringify(params)}:${tick}`;
 
   useEffect(() => {
     let active = true;
@@ -24,5 +25,5 @@ export default function usePagedList(loader, params) {
     return () => { active = false; };
   }, [key]);
 
-  return state;
+  return { ...state, reload: () => setTick((value) => value + 1) };
 }

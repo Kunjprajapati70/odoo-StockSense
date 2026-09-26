@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, Boxes, PackageX, TriangleAlert } from 'lucide-react';
 import FilterBar from '../../components/common/FilterBar';
 import { ErrorState, TableSkeleton, Badge } from '../../components/common/States';
@@ -10,15 +10,19 @@ import { ROUTES } from '../../constants/routes';
 import { formatDay, formatNumber, STATUS_LABELS } from '../../utils/format';
 
 const EMPTY_FILTERS = { range: '30d', documentType: 'all', status: 'all', warehouse: '', location: '', category: '', from: '', to: '' };
+const CHART_COLORS = ['#1e4db7', '#1a7a32', '#c45c12', '#6b3cc9', '#c43b78', '#0f7f96', '#c43737', '#5b2d91', '#b45309'];
+const INCOMING = '#1a7a32';
+const OUTGOING = '#c45c12';
+const ADJUSTMENTS = '#1e4db7';
 
 export default function Dashboard() {
   const { theme } = useTheme();
   const dark = theme === 'dark';
-  const grid = dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)';
-  const tick = { fill: dark ? '#94a3b8' : '#64748b', fontSize: 12, fontWeight: 500 };
+  const grid = dark ? 'rgba(255, 255, 255, 0.08)' : '#eef1f4';
+  const tick = { fill: dark ? '#94a3b8' : '#9ca3af', fontSize: 12, fontWeight: 500 };
   const tooltipStyle = dark
-    ? { borderRadius: 10, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc' }
-    : { borderRadius: 10, border: '1px solid #e7e8ef', background: '#ffffff', color: '#1f2937' };
+    ? { borderRadius: 12, border: '1px solid #334155', background: '#1e293b', color: '#f8fafc', boxShadow: 'none' }
+    : { borderRadius: 12, border: '1px solid #e6e8ec', background: '#ffffff', color: '#1a1d21', boxShadow: '0 8px 24px rgba(16,24,40,0.08)' };
   const legendStyle = { color: dark ? '#cbd5e1' : '#334155', fontWeight: 500 };
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [data, setData] = useState(null);
@@ -127,12 +131,12 @@ export default function Dashboard() {
       {data && !loading ? (
         <>
           <div className="kpi-grid">
-            <Link className="card kpi kpi-indigo" to={ROUTES.PRODUCTS}><span className="kpi-icon"><Boxes size={18} /></span><span><strong>{formatNumber(data.kpis.productsInStock)}</strong><span>Products in stock · {formatNumber(data.kpis.unitsOnHand)} units</span></span></Link>
-            <Link className="card kpi kpi-amber" to={`${ROUTES.PRODUCTS}?stockStatus=low_stock`}><span className="kpi-icon"><TriangleAlert size={18} /></span><span><strong>{formatNumber(data.kpis.lowStock)}</strong><span>Low stock items</span></span></Link>
-            <Link className="card kpi kpi-rose" to={`${ROUTES.PRODUCTS}?stockStatus=out_of_stock`}><span className="kpi-icon"><PackageX size={18} /></span><span><strong>{formatNumber(data.kpis.outOfStock)}</strong><span>Out of stock items</span></span></Link>
-            <Link className="card kpi kpi-sky" to={ROUTES.RECEIPTS}><span className="kpi-icon"><ArrowDownToLine size={18} /></span><span><strong>{formatNumber(data.kpis.pendingReceipts)}</strong><span>Pending receipts</span></span></Link>
-            <Link className="card kpi kpi-violet" to={ROUTES.DELIVERIES}><span className="kpi-icon"><ArrowUpFromLine size={18} /></span><span><strong>{formatNumber(data.kpis.pendingDeliveries)}</strong><span>Pending deliveries</span></span></Link>
-            <Link className="card kpi kpi-teal" to={ROUTES.TRANSFERS}><span className="kpi-icon"><ArrowLeftRight size={18} /></span><span><strong>{formatNumber(data.kpis.scheduledTransfers)}</strong><span>Scheduled transfers</span></span></Link>
+            <Link className="card kpi kpi-indigo" to={ROUTES.PRODUCTS}><span className="kpi-kicker">In stock</span><span className="kpi-icon"><Boxes size={18} /></span><strong>{formatNumber(data.kpis.productsInStock)}</strong><span className="kpi-note">{formatNumber(data.kpis.unitsOnHand)} units on hand</span></Link>
+            <Link className="card kpi kpi-amber" to={`${ROUTES.PRODUCTS}?stockStatus=low_stock`}><span className="kpi-kicker">Low stock</span><span className="kpi-icon"><TriangleAlert size={18} /></span><strong>{formatNumber(data.kpis.lowStock)}</strong><span className="kpi-note">At or below reorder level</span></Link>
+            <Link className="card kpi kpi-rose" to={`${ROUTES.PRODUCTS}?stockStatus=out_of_stock`}><span className="kpi-kicker">Out of stock</span><span className="kpi-icon"><PackageX size={18} /></span><strong>{formatNumber(data.kpis.outOfStock)}</strong><span className="kpi-note">Nothing available to ship</span></Link>
+            <Link className="card kpi kpi-sky" to={ROUTES.RECEIPTS}><span className="kpi-kicker">Receipts</span><span className="kpi-icon"><ArrowDownToLine size={18} /></span><strong>{formatNumber(data.kpis.pendingReceipts)}</strong><span className="kpi-note">Waiting to be validated</span></Link>
+            <Link className="card kpi kpi-violet" to={ROUTES.DELIVERIES}><span className="kpi-kicker">Deliveries</span><span className="kpi-icon"><ArrowUpFromLine size={18} /></span><strong>{formatNumber(data.kpis.pendingDeliveries)}</strong><span className="kpi-note">Open customer orders</span></Link>
+            <Link className="card kpi kpi-teal" to={ROUTES.TRANSFERS}><span className="kpi-kicker">Transfers</span><span className="kpi-icon"><ArrowLeftRight size={18} /></span><strong>{formatNumber(data.kpis.scheduledTransfers)}</strong><span className="kpi-note">Moves between locations</span></Link>
           </div>
           <div className="chart-grid">
             <article className="card card-pad chart-card">
@@ -140,16 +144,22 @@ export default function Dashboard() {
               <p>X-axis: date. Y-axis: quantity. Incoming receipts, outgoing deliveries, and adjustment differences.</p>
               <div className="chart-frame">
                 <ResponsiveContainer>
-                  <LineChart data={movement} margin={{ top: 8, right: 8, left: 8, bottom: 18 }}>
+                  <AreaChart data={movement} margin={{ top: 8, right: 8, left: 8, bottom: 18 }}>
+                    <defs>
+                      <linearGradient id="incomingFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={INCOMING} stopOpacity={0.28} />
+                        <stop offset="100%" stopColor={INCOMING} stopOpacity={0.03} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid stroke={grid} vertical={false} />
-                    <XAxis dataKey="label" tick={tick} height={42} label={{ value: 'Date', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
-                    <YAxis width={52} tick={tick} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
+                    <XAxis dataKey="label" tick={tick} height={42} axisLine={false} tickLine={false} label={{ value: 'Date', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
+                    <YAxis width={52} tick={tick} axisLine={false} tickLine={false} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
                     <Tooltip contentStyle={tooltipStyle} />
                     <Legend wrapperStyle={legendStyle} />
-                    <Line type="monotone" dataKey="incoming" name="Incoming stock" stroke={dark ? '#9b8afb' : '#8b7cf6'} strokeWidth={2.5} dot={false} />
-                    <Line type="monotone" dataKey="outgoing" name="Outgoing stock" stroke={dark ? '#fbbf24' : '#d99a24'} strokeWidth={2.5} dot={false} />
-                    <Line type="monotone" dataKey="adjustments" name="Adjustments" stroke={dark ? '#60a5fa' : '#4f7cff'} strokeWidth={2.5} dot={false} />
-                  </LineChart>
+                    <Area type="monotone" dataKey="incoming" name="Incoming stock" stroke={INCOMING} fill="url(#incomingFill)" strokeWidth={2.5} dot={false} activeDot={{ r: 4, fill: INCOMING }} />
+                    <Area type="monotone" dataKey="outgoing" name="Outgoing stock" stroke={OUTGOING} fill="transparent" strokeWidth={2.5} dot={false} />
+                    <Area type="monotone" dataKey="adjustments" name="Adjustments" stroke={ADJUSTMENTS} fill="transparent" strokeWidth={2.5} dot={false} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </article>
@@ -182,10 +192,12 @@ export default function Dashboard() {
                 <ResponsiveContainer>
                   <BarChart data={data.byCategory} margin={{ top: 8, right: 8, left: 8, bottom: 18 }}>
                     <CartesianGrid stroke={grid} vertical={false} />
-                    <XAxis dataKey="category" interval={0} angle={-28} textAnchor="end" height={78} tick={{ ...tick, fontSize: 11 }} label={{ value: 'Category', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
-                    <YAxis width={52} tick={tick} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
+                    <XAxis dataKey="category" interval={0} angle={-28} textAnchor="end" height={78} tick={{ ...tick, fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: 'Category', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
+                    <YAxis width={52} tick={tick} axisLine={false} tickLine={false} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="quantity" name="Stock quantity" fill={dark ? '#9b8afb' : '#8b7cf6'} radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="quantity" name="Stock quantity" radius={[6, 6, 0, 0]}>
+                      {data.byCategory.map((row, index) => <Cell key={row.category} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -197,10 +209,12 @@ export default function Dashboard() {
                 <ResponsiveContainer>
                   <BarChart data={data.byWarehouse} margin={{ top: 8, right: 8, left: 8, bottom: 18 }}>
                     <CartesianGrid stroke={grid} vertical={false} />
-                    <XAxis dataKey="warehouse" interval={0} angle={-18} textAnchor="end" height={78} tick={{ ...tick, fontSize: 11 }} label={{ value: 'Warehouse', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
-                    <YAxis width={52} tick={tick} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
+                    <XAxis dataKey="warehouse" interval={0} angle={-18} textAnchor="end" height={78} tick={{ ...tick, fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: 'Warehouse', position: 'insideBottom', offset: -2, fill: tick.fill, fontSize: 11 }} />
+                    <YAxis width={52} tick={tick} axisLine={false} tickLine={false} label={{ value: 'Quantity', angle: -90, position: 'insideLeft', fill: tick.fill, fontSize: 11 }} />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="quantity" name="Total stock" fill={dark ? '#60a5fa' : '#4f7cff'} radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="quantity" name="Total stock" radius={[6, 6, 0, 0]}>
+                      {data.byWarehouse.map((row, index) => <Cell key={row.warehouse} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

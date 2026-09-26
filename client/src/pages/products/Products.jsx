@@ -72,7 +72,11 @@ export default function Products() {
 
   function update(event) {
     const { name, value, type, checked } = event.target;
-    setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+    setForm((current) => ({
+      ...current,
+      [name]: type === 'checkbox' ? checked : value,
+      ...(name === 'warehouse' ? { location: '' } : {}),
+    }));
   }
 
   useEffect(() => {
@@ -87,12 +91,24 @@ export default function Products() {
     event.preventDefault();
     setBusy(true);
     setFormError('');
+    const opening = Number(form.initialStock);
+    if (opening > 0 && (!form.warehouse || !form.location)) {
+      setFormError('Choose a warehouse and location for the opening stock.');
+      setBusy(false);
+      return;
+    }
     try {
-      await productService.create({ ...form, reorderLevel: Number(form.reorderLevel), initialStock: Number(form.initialStock) });
+      await productService.create({
+        ...form,
+        name: form.name.trim(),
+        sku: form.sku.trim().toUpperCase(),
+        reorderLevel: Number(form.reorderLevel),
+        initialStock: opening,
+      });
       toast.notify('Product created successfully.');
       setOpen(false);
       setForm(EMPTY);
-      setParams((current) => new URLSearchParams(current));
+      list.reload();
     } catch (err) {
       setFormError(errorMessage(err));
     } finally {
@@ -204,17 +220,18 @@ export default function Products() {
             <div className="field"><label htmlFor="initialStock">Initial stock</label><input id="initialStock" name="initialStock" type="number" min="0" step="0.001" value={form.initialStock} onChange={update} /></div>
             <div className="field"><label htmlFor="reorderLevel">Reorder level</label><input id="reorderLevel" name="reorderLevel" type="number" min="0" step="0.001" value={form.reorderLevel} onChange={update} /></div>
             <div className="field"><label htmlFor="warehouse">Warehouse</label>
-              <select id="warehouse" name="warehouse" value={form.warehouse} onChange={update}>
+              <select id="warehouse" name="warehouse" value={form.warehouse} required={Number(form.initialStock) > 0} onChange={update}>
                 <option value="">Select if opening stock is above zero</option>
                 {warehouses.map((warehouse) => <option key={warehouse._id} value={warehouse._id}>{warehouse.name}</option>)}
               </select>
             </div>
             <div className="field"><label htmlFor="location">Location</label>
-              <select id="location" name="location" value={form.location} onChange={update}>
-                <option value="">Select</option>
+              <select id="location" name="location" value={form.location} required={Number(form.initialStock) > 0} onChange={update}>
+                <option value="">{form.warehouse && locations.length === 0 ? 'No locations in this warehouse' : 'Select'}</option>
                 {locations.map((location) => <option key={location._id} value={location._id}>{location.name}</option>)}
               </select>
             </div>
+            <p className="muted wide">Opening stock is optional. When it is above zero, choose the warehouse and location that will receive it.</p>
             <div className="field wide"><label htmlFor="description">Description</label><textarea id="description" name="description" value={form.description} onChange={update} /></div>
             <label className="wide"><input type="checkbox" name="isActive" checked={form.isActive} onChange={update} /> Active</label>
             {formError ? <p className="form-error wide">{formError}</p> : null}

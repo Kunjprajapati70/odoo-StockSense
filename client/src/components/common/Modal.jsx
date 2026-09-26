@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 
 export default function Modal({ title, children, onClose, footer }) {
   const ref = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const previous = document.activeElement;
@@ -9,14 +11,14 @@ export default function Modal({ title, children, onClose, footer }) {
     const focusable = dialog?.querySelector('input, select, textarea, button');
     focusable?.focus();
     function onKey(event) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     }
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       previous?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>

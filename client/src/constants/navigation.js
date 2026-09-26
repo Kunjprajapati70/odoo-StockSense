@@ -28,7 +28,6 @@ export const NAV_SECTIONS = [
       { label: 'Products', to: ROUTES.PRODUCTS, icon: Boxes },
       { label: 'Categories', to: ROUTES.CATEGORIES, icon: Tags },
       { label: 'Reorder rules', to: ROUTES.REORDER, icon: SlidersHorizontal },
-      { label: 'Warehouses', to: ROUTES.WAREHOUSE, icon: Warehouse },
     ],
   },
   {
@@ -42,10 +41,16 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Account',
+    label: 'Settings',
     items: [
-      { label: 'Profile', to: ROUTES.PROFILE, icon: UserRound },
       { label: 'Settings', to: ROUTES.SETTINGS, icon: Settings },
+      { label: 'Warehouses', to: ROUTES.WAREHOUSE, icon: Warehouse },
+    ],
+  },
+  {
+    label: 'Profile',
+    items: [
+      { label: 'My profile', to: ROUTES.PROFILE, icon: UserRound },
     ],
   },
 ];

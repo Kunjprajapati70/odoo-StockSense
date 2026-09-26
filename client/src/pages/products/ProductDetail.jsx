@@ -90,9 +90,15 @@ export default function ProductDetail() {
             </div>
             <div className="field"><label htmlFor="edit-reorder">Reorder level</label><input id="edit-reorder" type="number" min="0" step="0.001" value={form.reorderLevel} disabled={!isManager} onChange={(event) => setForm({ ...form, reorderLevel: event.target.value })} /></div>
             <div className="field wide"><label htmlFor="edit-description">Description</label><textarea id="edit-description" value={form.description} disabled={!isManager} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
-            <label><input type="checkbox" checked={form.isActive} disabled={!isManager} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} /> Active</label>
-            {isManager ? <button className="btn btn-primary" type="submit">Save changes</button> : null}
-            {isManager ? <button className="btn btn-danger" type="button" onClick={() => setConfirm(true)}>Delete</button> : null}
+            <div className="form-footer wide">
+              <label className="check-line"><input type="checkbox" checked={form.isActive} disabled={!isManager} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} /> Active</label>
+              {isManager ? (
+                <div className="form-footer-actions">
+                  <button className="btn btn-danger" type="button" onClick={() => setConfirm(true)}>Delete</button>
+                  <button className="btn btn-primary" type="submit">Save changes</button>
+                </div>
+              ) : null}
+            </div>
           </form>
         </article>
         <article className="card card-pad">

@@ -26,7 +26,7 @@ export default function ForgotPassword() {
 
   return (
     <form onSubmit={onSubmit} className="form-grid">
-      <p className="muted wide">Enter the email on the account. A verification code will be issued. In local development the code is printed in the API server log, not in this page.</p>
+      <p className="muted wide">Enter the email on the account. We will send a 6-digit code that expires in 10 minutes.</p>
       <div className="field wide">
         <label htmlFor="reset-email">Email</label>
         <input id="reset-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
