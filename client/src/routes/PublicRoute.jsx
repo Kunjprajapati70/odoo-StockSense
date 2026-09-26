@@ -1,9 +1,10 @@
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ROUTES } from '../constants/routes';
 
-/**
- * Public auth screens will redirect signed-in users from here.
- * Until authentication is implemented, matched routes render so the shell can be reviewed.
- */
 export default function PublicRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to={ROUTES.DASHBOARD} replace />;
   return <Outlet />;
 }

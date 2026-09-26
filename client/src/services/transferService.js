@@ -1,6 +1,1 @@
-/**
- * Transfer requests will be added with internal transfer operations.
- */
-const transferService = {};
-
-export default transferService;
+export { transferService as default } from './inventoryService';

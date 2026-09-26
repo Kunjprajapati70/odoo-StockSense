@@ -1,12 +1,16 @@
-import PageHeader from '../../components/common/PageHeader';
+import { DocumentList } from '../../features/documents/DocumentWorkspace';
+import { adjustmentService } from '../../services/inventoryService';
 
 export default function Adjustments() {
   return (
-    <section className="page">
-      <PageHeader
-        title="Adjustments"
-        description="Inventory adjustments will be managed here."
-      />
-    </section>
+    <DocumentList
+      title="Adjustments"
+      description="Enter the physical count. Validation records the difference against the live system quantity."
+      basePath="/adjustments"
+      service={adjustmentService}
+      mode="adjustment"
+      partyKey="reason"
+      partyLabel="Reason"
+    />
   );
 }

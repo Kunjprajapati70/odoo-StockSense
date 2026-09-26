@@ -1,6 +1,1 @@
-/**
- * Receipt requests will be added with incoming stock operations.
- */
-const receiptService = {};
-
-export default receiptService;
+export { receiptService as default } from './inventoryService';

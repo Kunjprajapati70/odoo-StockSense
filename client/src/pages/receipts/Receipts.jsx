@@ -1,12 +1,16 @@
-import PageHeader from '../../components/common/PageHeader';
+import { DocumentList } from '../../features/documents/DocumentWorkspace';
+import { receiptService } from '../../services/inventoryService';
 
 export default function Receipts() {
   return (
-    <section className="page">
-      <PageHeader
-        title="Receipts"
-        description="Incoming stock receipts will be managed here."
-      />
-    </section>
+    <DocumentList
+      title="Receipts"
+      description="Incoming stock increases quantity only when a receipt is validated."
+      basePath="/receipts"
+      service={receiptService}
+      mode="receipt"
+      partyKey="supplier"
+      partyLabel="Supplier"
+    />
   );
 }
