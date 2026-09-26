@@ -1,226 +1,137 @@
 import React, { useState } from 'react'
-import { PageHeader } from '@/components/layout/PageHeader'
-import { HeroKpiCard } from '@/components/dashboard/HeroKpiCard'
-import { SparklineCard } from '@/components/dashboard/SparklineCard'
-import { ValuationChart } from '@/components/dashboard/ValuationChart'
-import { MovementFlowChart } from '@/components/dashboard/MovementFlowChart'
-import { LowStockAlerts } from '@/components/dashboard/LowStockAlerts'
-import { RecentOperationsTable } from '@/components/dashboard/RecentOperationsTable'
-import { useInventory } from '@/context/InventoryContext'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import {
-  Boxes,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  AlertTriangle,
-  Warehouse,
-  Layers,
-  Sparkles,
-  ExternalLink,
-} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useInventory } from '@/context/InventoryContext'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { DashboardKpiStrip } from '@/components/dashboard/DashboardKpiStrip'
+import { InventoryMovementChart } from '@/components/dashboard/InventoryMovementChart'
+import { WarehouseStockPanel } from '@/components/dashboard/WarehouseStockPanel'
+import { LowStockAlerts } from '@/components/dashboard/LowStockAlerts'
+import { RecentMovementsFeed, PendingOperationsPanel } from '@/components/dashboard/DashboardPanels'
+import { Button } from '@/components/ui/Button'
 import { NewReceiptModal } from '@/components/forms/NewReceiptModal'
-import { NewDeliveryModal } from '@/components/forms/NewDeliveryModal'
 import { NewProductModal } from '@/components/forms/NewProductModal'
+import {
+  RefreshCw,
+  Filter,
+  Download,
+  TrendingUp,
+  Calendar,
+} from 'lucide-react'
+import { cn } from '@/utils/cn'
+
+// ─── Small Live Stat Pill ──────────────────────────────────────────────────────
+
+const LivePill: React.FC = () => (
+  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+    Live
+  </span>
+)
+
+// ─── Dashboard Page ────────────────────────────────────────────────────────────
 
 export const DashboardPage: React.FC = () => {
   const { kpis, warehouses, selectedWarehouseId } = useInventory()
   const navigate = useNavigate()
 
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false)
-  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const activeWh = warehouses.find((w) => w.id === selectedWarehouseId)
 
-  // Sparkline mock datasets for visual polish
-  const redSparkData = [
-    { value: 28 },
-    { value: 24 },
-    { value: 22 },
-    { value: 25 },
-    { value: 19 },
-    { value: 15 },
-    { value: 12 },
-  ]
-  const greenSparkData1 = [
-    { value: 14 },
-    { value: 19 },
-    { value: 22 },
-    { value: 26 },
-    { value: 31 },
-    { value: 38 },
-    { value: 45 },
-  ]
-  const greenSparkData2 = [
-    { value: 20 },
-    { value: 22 },
-    { value: 21 },
-    { value: 28 },
-    { value: 33 },
-    { value: 35 },
-    { value: 42 },
-  ]
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    setTimeout(() => setIsRefreshing(false), 1000)
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
+    <div className="space-y-6 pb-4">
+
+      {/* ── Page Header ───────────────────────────────────────────────────────── */}
       <PageHeader
-        title={activeWh ? `${activeWh.code} Operations Overview` : 'Enterprise Inventory Overview'}
-        subtitle={
-          activeWh
-            ? `Live warehouse operations, dock throughput, and inventory storage metrics for ${activeWh.name}.`
-            : 'Unified multi-warehouse intelligence, stock ledger audit logs, and supply chain telemetry.'
-        }
-        badge={
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Telemetry
-          </span>
-        }
+        title="Inventory Overview"
+        subtitle="Monitor your stock, warehouse activity and pending operations."
+        badge={<LivePill />}
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => setIsProductModalOpen(true)}>
-              + Add SKU
+            {/* Date / filter control */}
+            <button className="hidden sm:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] text-slate-400 hover:text-slate-200 transition-all text-[12px] font-medium">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Sep 2026</span>
+            </button>
+
+            {/* Warehouse selector pill (shows current filter) */}
+            <div className="hidden sm:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[12px] font-medium text-slate-300">
+              <div className="w-2 h-2 rounded-full bg-[#ff6a00]" />
+              {activeWh ? activeWh.code : 'All Warehouses'}
+            </div>
+
+            {/* Filter */}
+            <button className="hidden lg:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] text-slate-400 hover:text-slate-200 transition-all text-[12px]">
+              <Filter className="w-3.5 h-3.5" />
+              Filters
+            </button>
+
+            {/* Export */}
+            <button className="hidden lg:flex items-center gap-2 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] text-slate-400 hover:text-slate-200 transition-all text-[12px]">
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </button>
+
+            {/* Refresh */}
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 h-9 px-3.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] text-slate-400 hover:text-slate-200 transition-all text-[12px]"
+              title="Refresh dashboard"
+            >
+              <RefreshCw className={cn('w-3.5 h-3.5 transition-transform', isRefreshing && 'animate-spin')} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+
+            {/* Primary actions */}
+            <Button variant="secondary" size="sm" onClick={() => setIsProductModalOpen(true)} className="h-9">
+              + Product
             </Button>
-            <Button variant="primary" size="sm" onClick={() => setIsReceiptModalOpen(true)}>
+            <Button variant="primary" size="sm" onClick={() => setIsReceiptModalOpen(true)} className="h-9 font-semibold">
+              <TrendingUp className="w-3.5 h-3.5" />
               Receive Stock
             </Button>
           </>
         }
       />
 
-      {/* TOP HERO SECTION: Matching the reference image layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Performance / Warehouses Summary Card (Reference: Safe Vaults Performance left card) */}
-        <div className="lg:col-span-5 flex flex-col">
-          <Card className="p-6 h-full flex flex-col justify-between space-y-6">
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-white/[0.05] border border-white/10 text-slate-300">
-                    <Warehouse className="w-4 h-4 text-[#ff6a00]" />
-                  </div>
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-400">
-                    Network Capacity
-                  </span>
-                </div>
-                <span className="text-xs font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2.5 py-0.5 rounded-full">
-                  All Systems Online
-                </span>
-              </div>
+      {/* ── KPI Strip ─────────────────────────────────────────────────────────── */}
+      <DashboardKpiStrip
+        kpis={kpis}
+        onNavigate={navigate}
+      />
 
-              <div className="mt-4">
-                <div className="text-sm font-semibold text-slate-300">Operational Hubs</div>
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  {warehouses.map((wh) => (
-                    <div
-                      key={wh.id}
-                      className="px-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/10 text-xs font-mono flex items-center gap-1.5"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff6a00]" />
-                      <span className="text-white font-bold">{wh.code}</span>
-                      <span className="text-slate-400 text-[10px]">({wh.utilizationPercent}%)</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Metrics Bar inside left card */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-white/[0.08]">
-              <div>
-                <div className="text-[10px] font-mono uppercase text-slate-400">Inbound Orders</div>
-                <div className="text-xl font-extrabold text-white font-mono mt-0.5">
-                  {kpis.pendingReceipts} Pending
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-mono uppercase text-slate-400">Outbound Ready</div>
-                <div className="text-xl font-extrabold text-white font-mono mt-0.5">
-                  {kpis.pendingDeliveries} Ready
-                </div>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <div className="text-[10px] font-mono uppercase text-slate-400">Transfers</div>
-                <div className="text-xl font-extrabold text-white font-mono mt-0.5">
-                  {kpis.activeTransfers} In-Transit
-                </div>
-              </div>
-            </div>
-          </Card>
+      {/* ── Movement Chart + Warehouse Panel ──────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="lg:col-span-8 min-h-[400px]">
+          <InventoryMovementChart />
         </div>
-
-        {/* Right Hero Card: Vibrant Orange Card matching reference photo! */}
-        <div className="lg:col-span-7">
-          <HeroKpiCard
-            valuation={kpis.totalValuation}
-            totalSkus={kpis.totalSkuCount}
-            turnoverRate={kpis.turnoverRate}
-            fillRate={kpis.fillRate}
-          />
+        <div className="lg:col-span-4 min-h-[400px]">
+          <WarehouseStockPanel />
         </div>
       </div>
 
-      {/* THREE ANALYTICS SPARKLINE CARDS: Matching "Popular Vaults" row from reference */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <SparklineCard
-          title="Stock Deficit & Critical Alerts"
-          subtitle="Items needing immediate purchase reorder"
-          value={kpis.lowStockCount}
-          unitLabel="Critical SKUs"
-          changePercent={14.2}
-          trend="down"
-          data={redSparkData}
-          color="red"
-          icon={<AlertTriangle className="w-4 h-4 text-rose-400" />}
-          onClick={() => navigate('/products')}
-        />
-        <SparklineCard
-          title="Inbound Receipts Intake"
-          subtitle="Scheduled supplier purchase orders"
-          value={kpis.pendingReceipts}
-          unitLabel="Shipments"
-          changePercent={24.8}
-          trend="up"
-          data={greenSparkData1}
-          color="green"
-          icon={<ArrowDownToLine className="w-4 h-4 text-emerald-400" />}
-          onClick={() => navigate('/receipts')}
-        />
-        <SparklineCard
-          title="Outbound Customer Dispatch"
-          subtitle="Orders packed and ready for shipping"
-          value={kpis.pendingDeliveries}
-          unitLabel="Orders"
-          changePercent={18.4}
-          trend="up"
-          data={greenSparkData2}
-          color="green"
-          icon={<ArrowUpFromLine className="w-4 h-4 text-emerald-400" />}
-          onClick={() => navigate('/deliveries')}
-        />
-      </div>
-
-      {/* TWO INTEGRATED CHARTS: Valuation Area Chart & Flow Bar Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ValuationChart />
-        <MovementFlowChart />
-      </div>
-
-      {/* BOTTOM SECTION: Critical Alerts + Live Movement Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-4">
+      {/* ── Low Stock + Recent Movements ──────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="lg:col-span-5">
           <LowStockAlerts onOpenNewReceipt={() => setIsReceiptModalOpen(true)} />
         </div>
-        <div className="lg:col-span-8">
-          <RecentOperationsTable />
+        <div className="lg:col-span-7">
+          <RecentMovementsFeed />
         </div>
       </div>
 
-      {/* Modals */}
+      {/* ── Pending Operations (tabbed table) ─────────────────────────────────── */}
+      <PendingOperationsPanel />
+
+      {/* ── Modals ────────────────────────────────────────────────────────────── */}
       <NewReceiptModal isOpen={isReceiptModalOpen} onClose={() => setIsReceiptModalOpen(false)} />
-      <NewDeliveryModal isOpen={isDeliveryModalOpen} onClose={() => setIsDeliveryModalOpen(false)} />
       <NewProductModal isOpen={isProductModalOpen} onClose={() => setIsProductModalOpen(false)} />
     </div>
   )

@@ -83,7 +83,18 @@ export const StockStatusBadge: React.FC<{ status: 'in_stock' | 'low_stock' | 'ou
 }
 
 export const OperationStatusBadge: React.FC<{
-  status: 'draft' | 'waiting' | 'waiting_availability' | 'ready' | 'done' | 'in_transit' | 'completed' | 'applied' | 'cancelled'
+  status:
+    | 'draft'
+    | 'waiting'
+    | 'waiting_availability'
+    | 'ready'
+    | 'picked'
+    | 'packed'
+    | 'done'
+    | 'in_transit'
+    | 'completed'
+    | 'applied'
+    | 'cancelled'
 }> = ({ status }) => {
   switch (status) {
     case 'draft':
@@ -103,6 +114,18 @@ export const OperationStatusBadge: React.FC<{
       return (
         <Badge variant="blue" dot>
           Ready
+        </Badge>
+      )
+    case 'picked':
+      return (
+        <Badge variant="purple" dot>
+          Picked
+        </Badge>
+      )
+    case 'packed':
+      return (
+        <Badge variant="orange" dot>
+          Packed
         </Badge>
       )
     case 'in_transit':

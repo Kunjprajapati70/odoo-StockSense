@@ -5,6 +5,7 @@ import {
   Product,
   StockItem,
   Receipt,
+  ReceiptStatus,
   Delivery,
   Transfer,
   Adjustment,
@@ -41,7 +42,7 @@ interface InventoryContextType {
   // Actions
   addProduct: (newProd: Omit<Product, 'id' | 'totalOnHand' | 'totalAllocated' | 'totalAvailable'> & { initialStock?: number; warehouseId?: string; locationId?: string }) => Product
   updateProduct: (id: string, updates: Partial<Product>) => void
-  addReceipt: (receipt: Omit<Receipt, 'id' | 'reference' | 'status'>) => Receipt
+  addReceipt: (receipt: Omit<Receipt, 'id' | 'reference' | 'status'> & { status?: ReceiptStatus }) => Receipt
   validateReceipt: (id: string) => void
   addDelivery: (delivery: Omit<Delivery, 'id' | 'reference' | 'status'>) => Delivery
   validateDelivery: (id: string) => void
@@ -246,7 +247,9 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)))
   }
 
-  const addReceipt = (receiptData: Omit<Receipt, 'id' | 'reference' | 'status'>) => {
+  const addReceipt = (
+    receiptData: Omit<Receipt, 'id' | 'reference' | 'status'> & { status?: ReceiptStatus },
+  ) => {
     const count = receipts.length + 105
     const reference = `WH/IN/${count.toString().padStart(5, '0')}`
     const id = `rec-${Date.now()}`
@@ -255,7 +258,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ...receiptData,
       id,
       reference,
-      status: 'waiting',
+      status: receiptData.status || 'waiting',
     }
 
     setReceipts((prev) => [newReceipt, ...prev])

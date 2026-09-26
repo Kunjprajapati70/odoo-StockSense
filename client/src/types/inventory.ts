@@ -1,7 +1,14 @@
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'discontinued'
 export type MoveType = 'RECEIPT' | 'DELIVERY' | 'INTERNAL_TRANSFER' | 'INVENTORY_ADJUSTMENT'
-export type ReceiptStatus = 'draft' | 'waiting' | 'done' | 'cancelled'
-export type DeliveryStatus = 'draft' | 'waiting_availability' | 'ready' | 'done' | 'cancelled'
+export type ReceiptStatus = 'draft' | 'waiting' | 'ready' | 'done' | 'cancelled'
+export type DeliveryStatus =
+  | 'draft'
+  | 'waiting_availability'
+  | 'ready'
+  | 'picked'
+  | 'packed'
+  | 'done'
+  | 'cancelled'
 export type TransferStatus = 'draft' | 'in_transit' | 'completed' | 'cancelled'
 export type AdjustmentStatus = 'draft' | 'applied'
 export type AdjustmentReason = 'cycle_count' | 'damage' | 'spoilage' | 'theft_loss' | 'found_stock' | 'calibration'
@@ -45,7 +52,7 @@ export interface Product {
   barcode: string
   categoryId: string
   categoryName: string
-  unit: 'pcs' | 'box' | 'kg' | 'm' | 'pallet'
+  unit: 'pcs' | 'box' | 'kg' | 'm' | 'pallet' | 'bag' | string
   costPrice: number
   sellingPrice: number
   minStock: number
@@ -115,6 +122,8 @@ export interface DeliveryLine {
   productSku: string
   productName: string
   quantityDemanded: number
+  quantityPicked?: number
+  quantityPacked?: number
   quantityShipped: number
   unitPrice: number
   subtotal: number
